@@ -20,7 +20,7 @@ const errorOut = (data: string, hideWarning?: boolean) => {
 
 (async () => {
   try {
-    const op: string = core.getInput('op');
+    const op: string = core.getInput('cmd');
     const args: string[] = core.getInput('args')?.split(' ');
     const hideWarning: boolean = core.getInput('hide-warning') === 'true';
     const file: string = core.getInput('file');

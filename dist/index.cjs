@@ -3235,7 +3235,7 @@ var errorOut = (data, hideWarning) => {
 (async () => {
   var _a;
   try {
-    const op = import_core.default.getInput("op");
+    const op = import_core.default.getInput("cmd");
     const args = (_a = import_core.default.getInput("args")) == null ? void 0 : _a.split(" ");
     const hideWarning = import_core.default.getInput("hide-warning") === "true";
     const file = import_core.default.getInput("file");
