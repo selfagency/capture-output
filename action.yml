@@ -1,0 +1,31 @@
+name: 'Capture Output'
+author: 'selfagency'
+description: 'Capture the output (and duration) of a command as a GitHub Actions `output` or file'
+branding:
+  icon: 'list'
+  color: 'green'
+inputs:
+  cmd:
+    description: 'Bash command to run'
+    type: string
+    required: true
+  args:
+    description: 'Comma separated list of arguments to pass to the command'
+    type: string
+    required: false
+  hide-warnings:
+    description: 'Hide warnings in error output'
+    type: boolean
+    required: false
+  file:
+    description: 'Full path to save file'
+    type: string
+    required: false
+outputs:
+  output:
+    description: 'Output of the command'
+  duration:
+    description: 'Duration of the command in seconds'
+runs:
+  using: 'node16'
+  main: 'dist/index.cjs'

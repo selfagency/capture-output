@@ -1,0 +1,50 @@
+{
+  "name": "capture-output",
+  "version": "1.0.0",
+  "description": "Capture the output (and duration) of a command as a GitHub Actions `output` or file",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/selfagency/capture-output.git"
+  },
+  "license": "MIT",
+  "author": "Daniel Sieradski <daniel@self.agency>",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc --project .",
+    "prepare": "husky install",
+    "start": "node dist/index.cjs",
+    "bundle": "rm -rf dist; esbuild src/action.ts --bundle --platform=node --target=node16 --outfile=dist/index.cjs",
+    "lint": "tsc --noEmit && eslint src/. && prettier --check src/.",
+    "lint-staged": "lint-staged --allow-empty"
+  },
+  "lint-staged": {
+    "*.{js,json,md,yml}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@actions/core": "^1.6.0",
+    "@actions/exec": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.18",
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
+    "@typescript-eslint/parser": "^5.15.0",
+    "esbuild": "^0.15.8",
+    "eslint": "^8.23.1",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-json": "^3.1.0",
+    "eslint-plugin-markdown": "^3.0.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.1",
+    "eslint-plugin-yml": "^1.2.0",
+    "eslint-scope": "^7.1.1",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.6.0",
+    "typescript": "^4.6.2"
+  }
+}
