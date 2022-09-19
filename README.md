@@ -10,13 +10,17 @@ Required inputs:
 
 Optional inputs:
 
-- `args`: A comma-separated list of arguments to run the command with
-- `hide-warnings`: Whether to report warnings in the GitHub Actions logs
+- `args`: A comma-separated list of arguments with which to run the command
+- `hide-warnings`: Hide warnings in the GitHub Actions logs (defaults to `false`)
+- `fail`: Fail the step if an error is detected (defaults to `true`)
 - `file`: The file to in which to record the output
 
 Outputs:
 
-- `output`: The command output (stdout + stderr)
+- `output`: The full command output (stdout + stderr)
+- `stdout`: The result of stdout
+- `stderr`: The result of stderr
+- `exit-code`: The command's exit code
 - `duration`: The time the command took to run, in seconds
 
 ```
@@ -28,10 +32,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Capture output
-        uses: 'selfagency/capture-output@v1.0.1'
+        uses: 'selfagency/capture-output@v1.0.2'
         with:
           cmd: yarn
           args: run,build,--verbose
           hide-warnings: true
+          fail: false
           file: ${{ github.workspace }}/output.txt
 ```

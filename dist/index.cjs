@@ -3222,10 +3222,14 @@ var import_perf_hooks = require("perf_hooks");
 var import_promises = require("fs/promises");
 var import_core = __toESM(require_core(), 1);
 var import_exec = __toESM(require_exec(), 1);
-var errorOut = (data, hideWarning) => {
+var errorOut = (data, hideWarning = false, fail = true) => {
   var _a, _b, _c;
   if (((_a = data == null ? void 0 : data.toLowerCase()) == null ? void 0 : _a.includes("error")) && !((_b = data == null ? void 0 : data.toLowerCase()) == null ? void 0 : _b.includes("warn")) && !(data == null ? void 0 : data.includes("ESLint must be installed")) && !(data == null ? void 0 : data.startsWith("error Command failed."))) {
-    import_core.default.setFailed(data);
+    if (fail) {
+      import_core.default.setFailed(data);
+    } else {
+      import_core.default.error(data);
+    }
   } else if (!hideWarning && ((_c = data == null ? void 0 : data.toLowerCase()) == null ? void 0 : _c.includes("warn"))) {
     import_core.default.warning(data);
   } else {
@@ -3239,21 +3243,27 @@ var errorOut = (data, hideWarning) => {
     const args = (_a = import_core.default.getInput("args")) == null ? void 0 : _a.split(" ");
     const hideWarning = import_core.default.getInput("hide-warning") === "true";
     const file = import_core.default.getInput("file");
+    const fail = import_core.default.getInput("fail") === "true";
     let output = "";
+    let stdout = "";
+    let stderr = "";
     const start = import_perf_hooks.performance.now();
     import_core.default.debug("Running command: " + op + " " + args.join(" "));
-    await import_exec.default.exec(op, args, {
+    const exitCode = await import_exec.default.exec(op, args, {
       listeners: {
         stdout: (data) => {
+          stdout += data.toString();
           output += data.toString();
           import_core.default.debug(data.toString());
         },
         stderr: (data) => {
+          stderr += data.toString();
           output += data.toString();
-          errorOut(data.toString(), hideWarning);
+          errorOut(data.toString(), hideWarning, fail);
         }
       }
     });
+    import_core.default.setOutput("exit-code", exitCode);
     const end = import_perf_hooks.performance.now();
     import_core.default.setOutput("duration", ((end - start) / 1e3).toFixed(2));
     output = output.trim();
@@ -3263,6 +3273,8 @@ Final output:
 *************
 ${output}`);
     import_core.default.setOutput("output", output);
+    import_core.default.setOutput("stdout", stdout);
+    import_core.default.setOutput("stderr", stderr);
     if (file) {
       await (0, import_promises.writeFile)(file, output);
     }
