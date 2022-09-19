@@ -3222,14 +3222,10 @@ var import_perf_hooks = require("perf_hooks");
 var import_promises = require("fs/promises");
 var import_core = __toESM(require_core(), 1);
 var import_exec = __toESM(require_exec(), 1);
-var errorOut = (data, hideWarning = false, fail = true) => {
+var errorOut = (data, hideWarning = false) => {
   var _a, _b, _c;
   if (((_a = data == null ? void 0 : data.toLowerCase()) == null ? void 0 : _a.includes("error")) && !((_b = data == null ? void 0 : data.toLowerCase()) == null ? void 0 : _b.includes("warn")) && !(data == null ? void 0 : data.includes("ESLint must be installed")) && !(data == null ? void 0 : data.startsWith("error Command failed."))) {
-    if (fail) {
-      import_core.default.setFailed(data);
-    } else {
-      import_core.default.error(data);
-    }
+    import_core.default.error(data);
   } else if (!hideWarning && ((_c = data == null ? void 0 : data.toLowerCase()) == null ? void 0 : _c.includes("warn"))) {
     import_core.default.warning(data);
   } else {
@@ -3259,7 +3255,7 @@ var errorOut = (data, hideWarning = false, fail = true) => {
         stderr: (data) => {
           stderr += data.toString();
           output += data.toString();
-          errorOut(data.toString(), hideWarning, fail);
+          errorOut(data.toString(), hideWarning);
         }
       }
     });
@@ -3277,6 +3273,9 @@ ${output}`);
     import_core.default.setOutput("stderr", stderr);
     if (file) {
       await (0, import_promises.writeFile)(file, output);
+    }
+    if (fail && exitCode != 0) {
+      import_core.default.setFailed(stderr);
     }
   } catch (err) {
     import_core.default.setFailed(err.message);

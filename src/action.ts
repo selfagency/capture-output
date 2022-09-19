@@ -3,18 +3,14 @@ import { writeFile } from 'fs/promises';
 import core from '@actions/core';
 import exec from '@actions/exec';
 
-const errorOut = (data: string, hideWarning = false, fail = true) => {
+const errorOut = (data: string, hideWarning = false) => {
   if (
     data?.toLowerCase()?.includes('error') &&
     !data?.toLowerCase()?.includes('warn') &&
     !data?.includes('ESLint must be installed') &&
     !data?.startsWith('error Command failed.')
   ) {
-    if (fail) {
-      core.setFailed(data);
-    } else {
-      core.error(data);
-    }
+    core.error(data);
   } else if (!hideWarning && data?.toLowerCase()?.includes('warn')) {
     core.warning(data);
   } else {
@@ -47,7 +43,7 @@ const errorOut = (data: string, hideWarning = false, fail = true) => {
         stderr: (data: Buffer) => {
           stderr += data.toString();
           output += data.toString();
-          errorOut(data.toString(), hideWarning, fail);
+          errorOut(data.toString(), hideWarning);
         }
       }
     });
@@ -66,6 +62,10 @@ const errorOut = (data: string, hideWarning = false, fail = true) => {
 
     if (file) {
       await writeFile(file, output);
+    }
+
+    if (fail && exitCode != 0) {
+      core.setFailed(stderr);
     }
   } catch (err) {
     core.setFailed((<Error>err).message);

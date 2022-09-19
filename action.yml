@@ -17,13 +17,25 @@ inputs:
     description: 'Hide warnings in error output'
     type: boolean
     required: false
+    default: false
   file:
     description: 'Full path to save file'
     type: string
     required: false
+  fail:
+    description: Fail if the command returns a non-zero exit code
+    type: boolean
+    required: false
+    default: true
 outputs:
   output:
     description: 'Output of the command'
+  stdout:
+    description: 'Command `stdout` output'
+  stderr:
+    description: 'Command `stderr` output'
+  error-code:
+    description: 'Command exit code'
   duration:
     description: 'Duration of the command in seconds'
 runs:

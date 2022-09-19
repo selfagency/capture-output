@@ -1,6 +1,6 @@
 {
   "name": "capture-output",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Capture the output (and duration) of a command as a GitHub Actions `output` or file",
   "repository": {
     "type": "git",
