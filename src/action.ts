@@ -2,6 +2,7 @@ import { performance } from 'perf_hooks';
 import { writeFile } from 'fs/promises';
 import core from '@actions/core';
 import exec from '@actions/exec';
+import io from '@actions/io';
 
 const errorOut = (data: string, hideWarning = false) => {
   if (
@@ -61,6 +62,10 @@ const errorOut = (data: string, hideWarning = false) => {
     core.setOutput('stderr', stderr);
 
     if (file) {
+      const path = file.split('/');
+      path.pop();
+      const dir = path.join('/');
+      await io.mkdirP(dir);
       await writeFile(file, output);
     }
 

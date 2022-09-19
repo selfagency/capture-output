@@ -1,6 +1,6 @@
 {
   "name": "capture-output",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Capture the output (and duration) of a command as a GitHub Actions `output` or file",
   "repository": {
     "type": "git",
@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "@actions/core": "^1.6.0",
-    "@actions/exec": "^1.1.1"
+    "@actions/exec": "^1.1.1",
+    "@actions/io": "^1.1.2"
   },
   "devDependencies": {
     "@types/node": "^18.7.18",

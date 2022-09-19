@@ -2690,7 +2690,7 @@ var require_toolrunner = __commonJS({
     var events = __importStar(require("events"));
     var child = __importStar(require("child_process"));
     var path = __importStar(require("path"));
-    var io = __importStar(require_io());
+    var io2 = __importStar(require_io());
     var ioUtil = __importStar(require_io_util());
     var timers_1 = require("timers");
     var IS_WINDOWS = process.platform === "win32";
@@ -2897,7 +2897,7 @@ var require_toolrunner = __commonJS({
           if (!ioUtil.isRooted(this.toolPath) && (this.toolPath.includes("/") || IS_WINDOWS && this.toolPath.includes("\\"))) {
             this.toolPath = path.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
           }
-          this.toolPath = yield io.which(this.toolPath, true);
+          this.toolPath = yield io2.which(this.toolPath, true);
           return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             this._debug(`exec tool: ${this.toolPath}`);
             this._debug("arguments:");
@@ -3222,6 +3222,7 @@ var import_perf_hooks = require("perf_hooks");
 var import_promises = require("fs/promises");
 var import_core = __toESM(require_core(), 1);
 var import_exec = __toESM(require_exec(), 1);
+var import_io = __toESM(require_io(), 1);
 var errorOut = (data, hideWarning = false) => {
   var _a, _b, _c;
   if (((_a = data == null ? void 0 : data.toLowerCase()) == null ? void 0 : _a.includes("error")) && !((_b = data == null ? void 0 : data.toLowerCase()) == null ? void 0 : _b.includes("warn")) && !(data == null ? void 0 : data.includes("ESLint must be installed")) && !(data == null ? void 0 : data.startsWith("error Command failed."))) {
@@ -3272,6 +3273,10 @@ ${output}`);
     import_core.default.setOutput("stdout", stdout);
     import_core.default.setOutput("stderr", stderr);
     if (file) {
+      const path = file.split("/");
+      path.pop();
+      const dir = path.join("/");
+      await import_io.default.mkdirP(dir);
       await (0, import_promises.writeFile)(file, output);
     }
     if (fail && exitCode != 0) {
