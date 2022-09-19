@@ -3238,7 +3238,7 @@ var errorOut = (data, hideWarning = false) => {
   try {
     const op = import_core.default.getInput("cmd");
     const args = (_a = import_core.default.getInput("args")) == null ? void 0 : _a.replace(/'/g, "").split(",");
-    const hideWarning = import_core.default.getInput("hide-warning") === "true";
+    const hideWarning = import_core.default.getInput("hide-warnings") === "true";
     const file = import_core.default.getInput("file");
     const fail = import_core.default.getInput("fail") === "true";
     let output = "";

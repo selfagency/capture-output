@@ -23,7 +23,7 @@ const errorOut = (data: string, hideWarning = false) => {
   try {
     const op: string = core.getInput('cmd');
     const args: string[] = core.getInput('args')?.replace(/'/g, '').split(',');
-    const hideWarning: boolean = core.getInput('hide-warning') === 'true';
+    const hideWarning: boolean = core.getInput('hide-warnings') === 'true';
     const file: string = core.getInput('file');
     const fail: boolean = core.getInput('fail') === 'true';
 
