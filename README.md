@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Capture output
-        uses: 'selfagency/capture-output@v1.0.2'
+        uses: 'selfagency/capture-output@v1.0.3'
         with:
           cmd: yarn
           args: run,build,--verbose
