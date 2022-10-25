@@ -20,21 +20,22 @@ const errorOut = (data: string, hideWarning = false) => {
 };
 
 (async () => {
+  const op: string = core.getInput('cmd');
+  const args: string[] = core.getInput('args')?.replace(/'/g, '').split(',');
+  const hideWarning: boolean = core.getInput('hide-warnings') === 'true';
+  const file: string = core.getInput('file');
+  const fail: boolean = core.getInput('fail') === 'true';
+
+  let output = '';
+  let stdout = '';
+  let stderr = '';
+  let exitCode = 0;
+
+  const start = performance.now();
+
   try {
-    const op: string = core.getInput('cmd');
-    const args: string[] = core.getInput('args')?.replace(/'/g, '').split(',');
-    const hideWarning: boolean = core.getInput('hide-warnings') === 'true';
-    const file: string = core.getInput('file');
-    const fail: boolean = core.getInput('fail') === 'true';
-
-    let output = '';
-    let stdout = '';
-    let stderr = '';
-
-    const start = performance.now();
-
     core.debug('Running command: ' + op + ' ' + args.join(' '));
-    const exitCode: number = await exec.exec(op, args, {
+    exitCode = await exec.exec(op, args, {
       listeners: {
         stdout: (data: Buffer) => {
           stdout += data.toString();
@@ -48,19 +49,23 @@ const errorOut = (data: string, hideWarning = false) => {
         }
       }
     });
+  } catch (err) {
+    core.setFailed(`Unexpected error: ${(<Error>err).message}`);
+  }
 
-    core.setOutput('exit-code', exitCode);
+  core.setOutput('exit-code', exitCode);
 
-    const end = performance.now();
-    core.setOutput('duration', ((end - start) / 1000).toFixed(2));
+  const end = performance.now();
+  core.setOutput('duration', ((end - start) / 1000).toFixed(2));
 
-    output = output.trim();
-    core.debug(`\n*************\nFinal output:\n*************\n${output}`);
-    core.setOutput('output', output);
+  output = output.trim();
+  core.debug(`\n*************\nFinal output:\n*************\n${output}`);
+  core.setOutput('output', output);
 
-    core.setOutput('stdout', stdout);
-    core.setOutput('stderr', stderr);
+  core.setOutput('stdout', stdout);
+  core.setOutput('stderr', stderr);
 
+  try {
     if (file) {
       const path = file.split('/');
       path.pop();
@@ -68,11 +73,11 @@ const errorOut = (data: string, hideWarning = false) => {
       await io.mkdirP(dir);
       await writeFile(file, output);
     }
-
-    if (fail && exitCode != 0) {
-      core.setFailed(stderr);
-    }
   } catch (err) {
-    core.setFailed((<Error>err).message);
+    core.setFailed(`Failed to write output to file: ${(<Error>err).message}`);
+  }
+
+  if (fail && exitCode != 0) {
+    core.setFailed(stderr);
   }
 })();

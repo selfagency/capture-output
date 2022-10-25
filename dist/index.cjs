@@ -3249,18 +3249,19 @@ var errorOut = (data, hideWarning = false) => {
 };
 (async () => {
   var _a;
+  const op = import_core.default.getInput("cmd");
+  const args = (_a = import_core.default.getInput("args")) == null ? void 0 : _a.replace(/'/g, "").split(",");
+  const hideWarning = import_core.default.getInput("hide-warnings") === "true";
+  const file = import_core.default.getInput("file");
+  const fail = import_core.default.getInput("fail") === "true";
+  let output = "";
+  let stdout = "";
+  let stderr = "";
+  let exitCode = 0;
+  const start = import_perf_hooks.performance.now();
   try {
-    const op = import_core.default.getInput("cmd");
-    const args = (_a = import_core.default.getInput("args")) == null ? void 0 : _a.replace(/'/g, "").split(",");
-    const hideWarning = import_core.default.getInput("hide-warnings") === "true";
-    const file = import_core.default.getInput("file");
-    const fail = import_core.default.getInput("fail") === "true";
-    let output = "";
-    let stdout = "";
-    let stderr = "";
-    const start = import_perf_hooks.performance.now();
     import_core.default.debug("Running command: " + op + " " + args.join(" "));
-    const exitCode = await import_exec.default.exec(op, args, {
+    exitCode = await import_exec.default.exec(op, args, {
       listeners: {
         stdout: (data) => {
           stdout += data.toString();
@@ -3274,18 +3275,22 @@ var errorOut = (data, hideWarning = false) => {
         }
       }
     });
-    import_core.default.setOutput("exit-code", exitCode);
-    const end = import_perf_hooks.performance.now();
-    import_core.default.setOutput("duration", ((end - start) / 1e3).toFixed(2));
-    output = output.trim();
-    import_core.default.debug(`
+  } catch (err) {
+    import_core.default.setFailed(`Unexpected error: ${err.message}`);
+  }
+  import_core.default.setOutput("exit-code", exitCode);
+  const end = import_perf_hooks.performance.now();
+  import_core.default.setOutput("duration", ((end - start) / 1e3).toFixed(2));
+  output = output.trim();
+  import_core.default.debug(`
 *************
 Final output:
 *************
 ${output}`);
-    import_core.default.setOutput("output", output);
-    import_core.default.setOutput("stdout", stdout);
-    import_core.default.setOutput("stderr", stderr);
+  import_core.default.setOutput("output", output);
+  import_core.default.setOutput("stdout", stdout);
+  import_core.default.setOutput("stderr", stderr);
+  try {
     if (file) {
       const path = file.split("/");
       path.pop();
@@ -3293,10 +3298,10 @@ ${output}`);
       await import_io.default.mkdirP(dir);
       await (0, import_promises.writeFile)(file, output);
     }
-    if (fail && exitCode != 0) {
-      import_core.default.setFailed(stderr);
-    }
   } catch (err) {
-    import_core.default.setFailed(err.message);
+    import_core.default.setFailed(`Failed to write output to file: ${err.message}`);
+  }
+  if (fail && exitCode != 0) {
+    import_core.default.setFailed(stderr);
   }
 })();
