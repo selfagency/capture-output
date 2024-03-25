@@ -39,5 +39,5 @@ outputs:
   duration:
     description: 'Duration of the command in seconds'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.cjs'
