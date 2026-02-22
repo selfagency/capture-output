@@ -33,7 +33,12 @@ export async function runAction(opts) {
         return { exitCode: 1 };
     }
     // Disallow NULs and newlines in inputs which could cause unexpected behavior
-    const containsInvalid = (s) => (!s ? false : /[\x00\r\n]/.test(s));
+    // Avoid control characters in regex literals to satisfy eslint no-control-regex.
+    const containsInvalid = (s) => {
+        if (!s)
+            return false;
+        return s.indexOf('\0') !== -1 || s.indexOf('\r') !== -1 || s.indexOf('\n') !== -1;
+    };
     if (containsInvalid(op) || containsInvalid(argsInput) || containsInvalid(file)) {
         core.setFailed('Inputs must not contain NUL, CR, or LF characters.');
         return { exitCode: 1 };
