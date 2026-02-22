@@ -1,6 +1,2 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-yarn bundle
-git add dist
-# yarn lint-staged
+pnpm run lint-staged
