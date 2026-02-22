@@ -2,50 +2,41 @@
   "name": "capture-output",
   "version": "1.0.9",
   "description": "Capture the output (and duration) of a command as a GitHub Actions `output` or file",
+  "license": "MIT",
+  "author": "Daniel Sieradski <daniel@self.agency>",
   "repository": {
     "type": "git",
     "url": "https://github.com/selfagency/capture-output.git"
   },
-  "license": "MIT",
-  "author": "Daniel Sieradski <daniel@self.agency>",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc --project .",
+    "format": "oxfmt --write",
+    "lint": "oxlint",
+    "lint-staged": "lint-staged --allow-empty",
+    "lint:fix": "oxlint --fix",
     "prepare": "husky install",
-    "start": "node dist/index.cjs",
-    "bundle": "rm -rf dist; esbuild src/action.ts --bundle --platform=node --target=node16 --outfile=dist/index.cjs",
-    "lint": "tsc --noEmit && eslint src/. && prettier --check src/.",
-    "lint-staged": "lint-staged --allow-empty"
+    "start": "npx tsx src/action.ts"
+  },
+  "dependencies": {
+    "@actions/core": "3.0.0",
+    "@actions/exec": "3.0.0",
+    "@actions/io": "3.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "25.3.0",
+    "husky": "9.1.7",
+    "lint-staged": "16.2.7",
+    "oxfmt": "^0.34.0",
+    "oxlint": "^1.49.0",
+    "oxlint-tsgolint": "^0.14.2",
+    "typescript": "5.9.3"
   },
   "lint-staged": {
     "*.{js,json,md,yml}": [
-      "eslint --fix",
-      "prettier --write"
+      "pnpm lint:fix",
+      "pnpm format"
     ]
-  },
-  "dependencies": {
-    "@actions/core": "^1.10.0",
-    "@actions/exec": "^1.1.1",
-    "@actions/io": "^1.1.2"
-  },
-  "devDependencies": {
-    "@types/node": "^18.11.2",
-    "@typescript-eslint/eslint-plugin": "^5.40.1",
-    "@typescript-eslint/parser": "^5.40.1",
-    "esbuild": "^0.25.0",
-    "eslint": "^8.25.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-json": "^3.1.0",
-    "eslint-plugin-markdown": "^3.0.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^6.1.0",
-    "eslint-plugin-yml": "^1.2.0",
-    "eslint-scope": "^7.1.1",
-    "husky": "^8.0.1",
-    "lint-staged": "^13.0.3",
-    "prettier": "^2.7.1",
-    "typescript": "^4.8.4"
   }
 }

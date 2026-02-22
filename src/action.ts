@@ -1,8 +1,8 @@
-import { performance } from 'perf_hooks';
-import { writeFile } from 'fs/promises';
-import core from '@actions/core';
-import exec from '@actions/exec';
-import io from '@actions/io';
+import * as core from '@actions/core';
+import * as exec from '@actions/exec';
+import * as io from '@actions/io';
+import { writeFile } from 'node:fs/promises';
+import { performance } from 'node:perf_hooks';
 
 const errorOut = (data: string, hideWarning = false) => {
   if (
