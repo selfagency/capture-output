@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (semver, without leading v)'
+        required: true
+        default: '0.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name: Create Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Generate changelog
+        id: generate_changelog
+        run: |
+          git fetch --tags
+          prev_tag=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -z "$prev_tag" ] || [ "$prev_tag" = "" ]; then
+            range="HEAD"
+          else
+            range="$prev_tag..HEAD"
+          fi
+          echo "Changelog range: $range"
+          # list commits with subject and short hash
+          changelog=$(git log $range --pretty=format:'- %s (%h)')
+          if [ -z "$changelog" ]; then
+            changelog="No notable changes"
+          fi
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$changelog" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Write changelog file
+        id: write_changelog
+        run: |
+          CHG_FILE="changelog-v${{ inputs.version }}.md"
+          echo "# Changelog for v${{ inputs.version }}" > "$CHG_FILE"
+          echo "" >> "$CHG_FILE"
+          echo "${{ steps.generate_changelog.outputs.changelog }}" >> "$CHG_FILE"
+          echo "changelog_file=$CHG_FILE" >> $GITHUB_OUTPUT
+      - name: Create annotated tag and push
+        id: tag
+        run: |
+          TAG="v${{ inputs.version }}"
+          echo "Creating tag $TAG"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub release and upload changelog
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: 'v${{ inputs.version }}'
+          name: 'v${{ inputs.version }}'
+          body: ${{ steps.generate_changelog.outputs.changelog }}
+          files: ${{ steps.write_changelog.outputs.changelog_file }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Output release info
+        run: |
+          echo "Released v${{ inputs.version }}"
