@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "25.3.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "husky": "9.1.7",
     "lint-staged": "16.2.7",
     "oxfmt": "^0.34.0",
