@@ -1,5 +1,7 @@
 # Capture Output Action
 
+[![CI](https://github.com/selfagency/capture-output/actions/workflows/ci.yml/badge.svg)](https://github.com/selfagency/capture-output/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/selfagency/capture-output/graph/badge.svg?token=qhQj9eIX8p)](https://codecov.io/gh/selfagency/capture-output)
+
 Capture the output (and duration) of a command as a GitHub Actions `output` or file
 
 ## How to use this Action

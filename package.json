@@ -1,6 +1,6 @@
 {
   "name": "capture-output",
-  "version": "1.0.9",
+  "version": "2.0.0",
   "description": "Capture the output (and duration) of a command as a GitHub Actions `output` or file",
   "license": "MIT",
   "author": "Daniel Sieradski <daniel@self.agency>",
@@ -9,10 +9,11 @@
     "url": "https://github.com/selfagency/capture-output.git"
   },
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/action.js",
   "scripts": {
     "build": "tsc --project .",
     "test": "vitest",
+    "test:coverage": "vitest --coverage",
     "format": "oxfmt --write",
     "lint": "oxlint",
     "lint-staged": "lint-staged --allow-empty",
