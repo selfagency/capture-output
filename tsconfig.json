@@ -1,4 +1,5 @@
 {
+  "input": ["src/**/*.ts"],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
@@ -6,8 +7,8 @@
     "target": "esnext",
     "types": ["node"],
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "strict": true,
@@ -17,5 +18,6 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true
-  }
+  },
+  "exclude": ["node_modules"]
 }

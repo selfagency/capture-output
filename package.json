@@ -12,6 +12,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc --project .",
+    "test": "vitest",
     "format": "oxfmt --write",
     "lint": "oxlint",
     "lint-staged": "lint-staged --allow-empty",
@@ -31,7 +32,8 @@
     "oxfmt": "^0.34.0",
     "oxlint": "^1.49.0",
     "oxlint-tsgolint": "^0.14.2",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.0.18"
   },
   "lint-staged": {
     "*.{js,json,md,yml}": [

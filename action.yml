@@ -34,7 +34,7 @@ outputs:
     description: 'Command `stdout` output'
   stderr:
     description: 'Command `stderr` output'
-  error-code:
+  exit-code:
     description: 'Command exit code'
   duration:
     description: 'Duration of the command in seconds'
