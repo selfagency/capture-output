@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 const errorOut = (data, hideWarning = false) => {
     if (data?.toLowerCase()?.includes('error') &&
@@ -17,12 +18,31 @@ const errorOut = (data, hideWarning = false) => {
         core.debug(data);
     }
 };
-(async () => {
-    const op = core.getInput('cmd');
-    const args = core.getInput('args')?.replace(/'/g, '').split(',');
-    const hideWarning = core.getInput('hide-warnings') === 'true';
-    const file = core.getInput('file');
-    const fail = core.getInput('fail') === 'true';
+export async function runAction(opts) {
+    const { op, argsInput, hideWarning = false, file, fail = true } = opts;
+    const args = argsInput
+        ? argsInput
+            .replace(/'/g, '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+    // Basic input validation to fail fast and avoid accidental injection-like values
+    if (!op || !op.trim()) {
+        core.setFailed('Input "cmd" is required and must not be empty.');
+        return { exitCode: 1 };
+    }
+    // Disallow NULs and newlines in inputs which could cause unexpected behavior
+    const containsInvalid = (s) => (!s ? false : /[\x00\r\n]/.test(s));
+    if (containsInvalid(op) || containsInvalid(argsInput) || containsInvalid(file)) {
+        core.setFailed('Inputs must not contain NUL, CR, or LF characters.');
+        return { exitCode: 1 };
+    }
+    // Limit lengths to reasonable sizes to avoid DoS via extremely large inputs
+    if (op.length > 1024 || (args && args.join(' ').length > 8192)) {
+        core.setFailed('Input too long.');
+        return { exitCode: 1 };
+    }
     let output = '';
     let stdout = '';
     let stderr = '';
@@ -30,6 +50,7 @@ const errorOut = (data, hideWarning = false) => {
     const start = performance.now();
     try {
         core.debug('Running command: ' + op + ' ' + args.join(' '));
+        // ignoreReturnCode to capture non-zero exit codes without throwing
         exitCode = await exec.exec(op, args, {
             listeners: {
                 stdout: (data) => {
@@ -42,10 +63,12 @@ const errorOut = (data, hideWarning = false) => {
                     output += data.toString();
                     errorOut(data.toString(), hideWarning);
                 }
-            }
+            },
+            ignoreReturnCode: true
         });
     }
     catch (err) {
+        exitCode = 1;
         core.setFailed(`Unexpected error: ${err.message}`);
     }
     core.setOutput('exit-code', exitCode);
@@ -58,10 +81,10 @@ const errorOut = (data, hideWarning = false) => {
     core.setOutput('stderr', stderr);
     try {
         if (file) {
-            const path = file.split('/');
-            path.pop();
-            const dir = path.join('/');
-            await io.mkdirP(dir);
+            const dir = path.dirname(file);
+            if (dir && dir !== '.') {
+                await io.mkdirP(dir);
+            }
             await writeFile(file, output);
         }
     }
@@ -69,7 +92,20 @@ const errorOut = (data, hideWarning = false) => {
         core.setFailed(`Failed to write output to file: ${err.message}`);
     }
     if (fail && exitCode != 0) {
-        core.setFailed(stderr);
+        core.setFailed(stderr || stdout || output || `Process exited with code ${exitCode}`);
     }
-})();
+    return { exitCode, output, stdout, stderr };
+}
+// Only auto-run when not executing under a test runner (Vitest sets VITEST=1)
+if (!process.env.VITEST) {
+    (async () => {
+        await runAction({
+            op: core.getInput('cmd'),
+            argsInput: core.getInput('args'),
+            hideWarning: core.getInput('hide-warnings') === 'true',
+            file: core.getInput('file'),
+            fail: core.getInput('fail') === 'true'
+        });
+    })();
+}
 //# sourceMappingURL=action.js.map
