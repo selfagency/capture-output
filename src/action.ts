@@ -1,8 +1,9 @@
-import { performance } from 'perf_hooks';
-import { writeFile } from 'fs/promises';
-import core from '@actions/core';
-import exec from '@actions/exec';
-import io from '@actions/io';
+import * as core from '@actions/core';
+import * as exec from '@actions/exec';
+import * as io from '@actions/io';
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { performance } from 'node:perf_hooks';
 
 const errorOut = (data: string, hideWarning = false) => {
   if (
@@ -19,12 +20,45 @@ const errorOut = (data: string, hideWarning = false) => {
   }
 };
 
-(async () => {
-  const op: string = core.getInput('cmd');
-  const args: string[] = core.getInput('args')?.replace(/'/g, '').split(',');
-  const hideWarning: boolean = core.getInput('hide-warnings') === 'true';
-  const file: string = core.getInput('file');
-  const fail: boolean = core.getInput('fail') === 'true';
+export async function runAction(opts: {
+  op: string;
+  argsInput?: string;
+  hideWarning?: boolean;
+  file?: string;
+  fail?: boolean;
+}) {
+  const { op, argsInput, hideWarning = false, file, fail = true } = opts;
+
+  const args: string[] = argsInput
+    ? argsInput
+        .replace(/'/g, '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+
+  // Basic input validation to fail fast and avoid accidental injection-like values
+  if (!op || !op.trim()) {
+    core.setFailed('Input "cmd" is required and must not be empty.');
+    return { exitCode: 1 };
+  }
+
+  // Disallow NULs and newlines in inputs which could cause unexpected behavior
+  // Avoid control characters in regex literals to satisfy eslint no-control-regex.
+  const containsInvalid = (s: string | undefined) => {
+    if (!s) return false;
+    return s.indexOf('\0') !== -1 || s.indexOf('\r') !== -1 || s.indexOf('\n') !== -1;
+  };
+  if (containsInvalid(op) || containsInvalid(argsInput) || containsInvalid(file)) {
+    core.setFailed('Inputs must not contain NUL, CR, or LF characters.');
+    return { exitCode: 1 };
+  }
+
+  // Limit lengths to reasonable sizes to avoid DoS via extremely large inputs
+  if (op.length > 1024 || (args && args.join(' ').length > 8192)) {
+    core.setFailed('Input too long.');
+    return { exitCode: 1 };
+  }
 
   let output = '';
   let stdout = '';
@@ -35,6 +69,7 @@ const errorOut = (data: string, hideWarning = false) => {
 
   try {
     core.debug('Running command: ' + op + ' ' + args.join(' '));
+    // ignoreReturnCode to capture non-zero exit codes without throwing
     exitCode = await exec.exec(op, args, {
       listeners: {
         stdout: (data: Buffer) => {
@@ -47,9 +82,11 @@ const errorOut = (data: string, hideWarning = false) => {
           output += data.toString();
           errorOut(data.toString(), hideWarning);
         }
-      }
+      },
+      ignoreReturnCode: true
     });
   } catch (err) {
+    exitCode = 1;
     core.setFailed(`Unexpected error: ${(<Error>err).message}`);
   }
 
@@ -67,10 +104,10 @@ const errorOut = (data: string, hideWarning = false) => {
 
   try {
     if (file) {
-      const path = file.split('/');
-      path.pop();
-      const dir = path.join('/');
-      await io.mkdirP(dir);
+      const dir = path.dirname(file);
+      if (dir && dir !== '.') {
+        await io.mkdirP(dir);
+      }
       await writeFile(file, output);
     }
   } catch (err) {
@@ -78,6 +115,21 @@ const errorOut = (data: string, hideWarning = false) => {
   }
 
   if (fail && exitCode != 0) {
-    core.setFailed(stderr);
+    core.setFailed(stderr || stdout || output || `Process exited with code ${exitCode}`);
   }
-})();
+
+  return { exitCode, output, stdout, stderr };
+}
+
+// Only auto-run when not executing under a test runner (Vitest sets VITEST=1)
+if (!process.env.VITEST) {
+  (async () => {
+    await runAction({
+      op: core.getInput('cmd'),
+      argsInput: core.getInput('args'),
+      hideWarning: core.getInput('hide-warnings') === 'true',
+      file: core.getInput('file'),
+      fail: core.getInput('fail') === 'true'
+    });
+  })();
+}
