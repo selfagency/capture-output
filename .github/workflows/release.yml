@@ -17,7 +17,7 @@ jobs:
     name: Create Release
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -26,18 +26,31 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
       - name: Generate changelog
         id: generate_changelog
         run: |
           git fetch --tags
           prev_tag=$(git describe --tags --abbrev=0 2>/dev/null || true)
-          if [ -z "$prev_tag" ] || [ "$prev_tag" = "" ]; then
+          if [ -z "$prev_tag" ]; then
             range="HEAD"
           else
             range="$prev_tag..HEAD"
           fi
-          echo "Changelog range: $range"
-          # list commits with subject and short hash
           changelog=$(git log $range --pretty=format:'- %s (%h)')
           if [ -z "$changelog" ]; then
             changelog="No notable changes"
@@ -46,32 +59,32 @@ jobs:
           echo "$changelog" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Write changelog file
-        id: write_changelog
-        run: |
-          CHG_FILE="changelog-v${{ inputs.version }}.md"
-          echo "# Changelog for v${{ inputs.version }}" > "$CHG_FILE"
-          echo "" >> "$CHG_FILE"
-          echo "${{ steps.generate_changelog.outputs.changelog }}" >> "$CHG_FILE"
-          echo "changelog_file=$CHG_FILE" >> $GITHUB_OUTPUT
-      - name: Create annotated tag and push
-        id: tag
+      - name: Commit built dist and tag release
         run: |
           TAG="v${{ inputs.version }}"
-          echo "Creating tag $TAG"
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
+          MAJOR_TAG="v$(echo ${{ inputs.version }} | cut -d. -f1)"
 
-      - name: Create GitHub release and upload changelog
-        uses: softprops/action-gh-release@v1
+          # Stage the bundled artifact (force-add since dist/ is gitignored)
+          git add --force dist/action.js
+          git commit -m "chore: release $TAG [skip ci]"
+
+          # Create the versioned annotated tag on this commit
+          git tag -a "$TAG" -m "Release $TAG"
+
+          # Move the floating major tag (e.g. v2) to this commit
+          git tag -fa "$MAJOR_TAG" -m "Release $TAG"
+
+          # Push everything
+          git push origin HEAD:main
+          git push origin "$TAG"
+          git push origin "$MAJOR_TAG" --force
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: 'v${{ inputs.version }}'
           name: 'v${{ inputs.version }}'
           body: ${{ steps.generate_changelog.outputs.changelog }}
-          files: ${{ steps.write_changelog.outputs.changelog_file }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Output release info
-        run: |
-          echo "Released v${{ inputs.version }}"

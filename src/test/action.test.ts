@@ -5,7 +5,7 @@ vi.mock('@actions/core', () => ({
   setOutput: vi.fn(),
   debug: vi.fn(),
   warning: vi.fn(),
-  error: vi.fn()
+  error: vi.fn(),
 }));
 
 vi.mock('@actions/exec', () => ({ exec: vi.fn() }));
