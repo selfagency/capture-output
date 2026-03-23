@@ -33,7 +33,7 @@ export async function runAction(opts: {
     ? argsInput
         .replace(/'/g, '')
         .split(',')
-        .map((s) => s.trim())
+        .map(s => s.trim())
         .filter(Boolean)
     : [];
 
@@ -81,9 +81,9 @@ export async function runAction(opts: {
           stderr += data.toString();
           output += data.toString();
           errorOut(data.toString(), hideWarning);
-        }
+        },
       },
-      ignoreReturnCode: true
+      ignoreReturnCode: true,
     });
   } catch (err) {
     exitCode = 1;
@@ -129,7 +129,7 @@ if (!process.env.VITEST) {
       argsInput: core.getInput('args'),
       hideWarning: core.getInput('hide-warnings') === 'true',
       file: core.getInput('file'),
-      fail: core.getInput('fail') === 'true'
+      fail: core.getInput('fail') === 'true',
     });
   })();
 }
