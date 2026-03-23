@@ -60,22 +60,30 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Commit built dist and tag release
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          TAG="v${{ inputs.version }}"
-          MAJOR_TAG="v$(echo ${{ inputs.version }} | cut -d. -f1)"
+          # Validate strict semver (X.Y.Z) before using the value in any command
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Error: version '${VERSION}' is not valid semver (expected X.Y.Z)" >&2
+            exit 1
+          fi
+
+          TAG="v${VERSION}"
+          MAJOR_TAG="v$(echo "$VERSION" | cut -d. -f1)"
 
           # Stage the bundled artifact (force-add since dist/ is gitignored)
           git add --force dist/action.js
-          git commit -m "chore: release $TAG [skip ci]"
+          git commit -m "chore: release ${TAG} [skip ci]"
 
           # Create the versioned annotated tag on this commit
-          git tag -a "$TAG" -m "Release $TAG"
+          git tag -a "$TAG" -m "Release ${TAG}"
 
           # Move the floating major tag (e.g. v2) to this commit
-          git tag -fa "$MAJOR_TAG" -m "Release $TAG"
+          git tag -fa "$MAJOR_TAG" -m "Release ${TAG}"
 
-          # Push everything
-          git push origin HEAD:main
+          # Push tags only — dist/action.js is carried with the tag commit objects;
+          # main is intentionally left unchanged so dist/ stays gitignored there.
           git push origin "$TAG"
           git push origin "$MAJOR_TAG" --force
 
@@ -87,4 +95,3 @@ jobs:
           body: ${{ steps.generate_changelog.outputs.changelog }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
